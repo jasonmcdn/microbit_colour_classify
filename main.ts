@@ -1,3 +1,9 @@
+function getAllDists () {
+    leaf_dists = allDists(leaf_rgb, last_r, last_g, last_b)
+    stem_dists = allDists(stem_rgb, last_r, last_g, last_b)
+    dry_soil_dists = allDists(dry_soil_rgb, last_r, last_g, last_b)
+    wet_soil_dists = allDists(wet_soil_rgb, last_r, last_g, last_b)
+}
 function setLeafRGB () {
     // Stem 1 R G B
     next_leaf_rgb = [11, 11, 11]
@@ -42,6 +48,28 @@ function setWetSoilRGB () {
     next_wet_soil_rgb = [41, 41, 41]
     wet_soil_rgb = concatLists(wet_soil_rgb, next_wet_soil_rgb)
 }
+function getPrediction () {
+    getAllDists()
+    prediction_d = leaf_dists[0]
+    prediction_index = 0
+    if (stem_dists[0] < prediction_d) {
+        prediction_d = stem_dists[0]
+        prediction_index = 1
+    } else if (dry_soil_dists[0] < prediction_d) {
+        prediction_d = dry_soil_dists[0]
+        prediction_index = 2
+    } else if (wet_soil_dists[0] < prediction_d) {
+        prediction_d = wet_soil_dists[0]
+        prediction_index = 3
+    }
+}
+function insert (list: any[], num: number) {
+    i = 0
+    while (results[i] >= num) {
+        i += 1
+    }
+    results.insertAt(i, num)
+}
 function setStemRGB () {
     // Stem 1 R G B
     next_stem_rgb = [31, 31, 31]
@@ -70,7 +98,7 @@ function setDrySoilRGB () {
 }
 function concatLists (list: number[], list2: number[]) {
     while (list2.length > 0) {
-        list.push(list2.shift())
+        results.push(list2.shift())
     }
     return list
 }
@@ -118,17 +146,56 @@ input.onButtonPressed(Button.AB, function () {
     basic.showIcon(IconNames.SmallHeart)
     control.waitMicros(400)
 })
-let n_list_colours = 0
-let i = 0
+function distance (num1: number, num2: number, num3: number, num1a: number, num2a: number, num3a: number) {
+    result = (num1 - num1a) ** 2
+    result += (num2 - num2a) ** 2
+    result += (num3 - num3a) ** 2
+    result = Math.sqrt(result)
+    return result
+}
+input.onButtonPressed(Button.B, function () {
+    if (pressed_A == 0) {
+        basic.showString("Press A")
+        basic.showLeds(`
+            . . # . .
+            . # . . .
+            # # # # #
+            . # . . .
+            . . # . .
+            `)
+        control.waitMicros(400)
+    } else {
+        getPrediction()
+        basic.showString("" + (prediction_names[prediction_index]))
+    }
+})
+function allDists (list: number[], num1a: number, num2a: number, num3a: number) {
+    results = [distance(list.shift(), list.shift(), list.shift(), num1a, num2a, num3a)]
+    while (list.length > 0) {
+        insert(results, distance(list.shift(), list.shift(), list.shift(), num1a, num2a, num3a))
+    }
+    return results
+}
+let result: number = []
+let n_list_colours: number = []
 let next_dry_soil_rgb: number[] = []
 let next_stem_rgb: number[] = []
+let results: number[] = []
+let i: number = []
 let next_wet_soil_rgb: number[] = []
 let next_leaf_rgb: number[] = []
-let pressed_A = 0
-let last_l = 0
-let last_b = 0
-let last_g = 0
-let last_r = 0
+let prediction_names: string[] = []
+let wet_soil_dists: number[] = []
+let dry_soil_dists: number[] = []
+let stem_dists: number[] = []
+let leaf_dists: number[] = []
+let prediction_index: number = []
+let prediction_d: number = []
+let pressed_A: number = []
+let last_l: number = []
+let last_b: number = []
+let last_g: number = []
+let last_r: number = []
 let wet_soil_rgb: number[] = []
 let dry_soil_rgb: number[] = []
 let stem_rgb: number[] = []
@@ -146,6 +213,18 @@ last_g = 0
 last_b = 0
 last_l = 0
 pressed_A = 0
+prediction_d = 1000
+prediction_index = 0
+leaf_dists = [0]
+stem_dists = [0]
+dry_soil_dists = [0]
+wet_soil_dists = [0]
+prediction_names = [
+"Leaf",
+"Stem",
+"Dry Soil",
+"Wet Soil"
+]
 basic.forever(function () {
     basic.showIcon(IconNames.Happy)
     control.waitMicros(1000)
